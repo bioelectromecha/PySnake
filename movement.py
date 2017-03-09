@@ -37,5 +37,10 @@ def move(movement_holder):
     movement_holder.lead_y += movement_holder.change_y
 
 
-def handle_edges(movement_holder, window_size):
-    if movement_holder.lead_x >= window_size or movement_holder.lead_x <= 0:
+#
+def is_beyond_edges(movement_holder, window_size):
+    if (movement_holder.lead_x >= window_size or movement_holder.lead_x <= 0
+            or movement_holder.lead_y >= window_size or movement_holder.lead_y <= 0):
+        return True
+    else:
+        return False
