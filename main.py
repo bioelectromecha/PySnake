@@ -1,67 +1,53 @@
 import pygame
 import colors
-import constants
+import movement
+import math
+
+# the game window size in pixels
+window_size = 800
+# the pixel size of each block on the screen
+block_size = 10
+# how many frames per second the game should draw
+frames_per_second = 60
+# how many pixels to advance per frame
+distance_per_frame = 5
 
 # create a window for the game
-gameDisplay = pygame.display.set_mode((800, 600))
-
+gameDisplay = pygame.display.set_mode((window_size, window_size))
+# set the label for the window
 pygame.display.set_caption('Slither')
-
-gameExit = False
-
-
-# x position on the screen
-lead_x = 300
-lead_x_change = 0
-# y position on the screen
-lead_y = 300
-lead_y_change = 0
-
-# how many pixels to move per frame (i.e speed)
-movement_delta = 5
-
+# init the initial location and movement params
+move_holder = movement.MovementHolder(math.floor(window_size/2), math.floor(window_size/2), distance_per_frame)
+# set to clock to control the fps
 clock = pygame.time.Clock()
 
+# the loop closes the window when this gets set to True
+gameExit = False
 
-def change_direction(direction):
-    print(direction)
-    if direction == constants.Direction.UP:
-        lead_x_change = 0
-        lead_y_change = -movement_delta
-    elif direction == constants.Direction.RIGHT:
-        lead_x_change = movement_delta
-        lead_y_change = 0
-    elif direction == constants.Direction.DOWN:
-        lead_x_change = 0
-        lead_y_change = movement_delta
-    elif direction == constants.Direction.LEFT:
-        lead_x_change = -movement_delta
-        lead_y_change = 0
-
-
+# main game loop
 while not gameExit:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             gameExit = True
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                change_direction(constants.Direction.LEFT)
+                movement.change_direction(move_holder, movement.Direction.LEFT)
             elif event.key == pygame.K_RIGHT:
-                change_direction(constants.Direction.RIGHT)
+                movement.change_direction(move_holder, movement.Direction.RIGHT)
             elif event.key == pygame.K_DOWN:
-                change_direction(constants.Direction.DOWN)
+                movement.change_direction(move_holder, movement.Direction.DOWN)
             elif event.key == pygame.K_UP:
-                change_direction(constants.Direction.UP)
+                movement.change_direction(move_holder, movement.Direction.UP)
 
     # if lead_x >= 800 or lead_x <= 0 or lead_y >= 600 or lead_y <= 0:
     #     lead_x_change =
     #     lead_y_change = 0
-    lead_x += lead_x_change
-    lead_y += lead_y_change
+
+    movement.move(move_holder)
     gameDisplay.fill(colors.white)
-    pygame.draw.rect(gameDisplay, colors.black, [lead_x, lead_y, 10, 10])
+    pygame.draw.rect(gameDisplay, colors.black, [move_holder.lead_x, move_holder.lead_y, block_size, block_size])
     pygame.display.update()
-    clock.tick(60)
+    clock.tick(frames_per_second)
 
 # un-initialize pygame
 pygame.quit()
