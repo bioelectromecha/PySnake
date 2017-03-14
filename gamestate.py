@@ -1,5 +1,4 @@
 import random
-import numpy
 
 
 class Direction:
@@ -55,7 +54,7 @@ class GameState:
             self.change = (-self.movement_delta, 0)
 
     def move(self):
-        self.lead = tuple(numpy.add(self.lead, self.change))
+        self.lead = (self.lead[0]+self.change[0], self.lead[1]+self.change[1])
         self.snake_list.append(self.lead)
         self.shorten_snake_tail()
 
