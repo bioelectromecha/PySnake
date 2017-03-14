@@ -42,6 +42,9 @@ def message_to_screen(msg, color, font, displace_y):
                                    game_state.window_size / 2 - screen_text.get_height()/2 + displace_y])
 
 
+
+
+
 def game_loop():
     # reset the state of the game
     game_state.reset()
@@ -52,8 +55,8 @@ def game_loop():
         while game_state.game_intro:
             handle_game_intro()
 
-        while game_state.game_over:
-            handle_game_over()
+        while game_state.game_pause:
+            handle_game_pause()
 
         # keypress event handling and logic
         handle_movement_events()
@@ -70,6 +73,9 @@ def game_loop():
         # draw stuff on screen
         draw()
 
+        while game_state.game_over:
+            handle_game_over()
+
     # un-initialize pygame
     pygame.quit()
 
@@ -78,9 +84,9 @@ def game_loop():
 
 
 def handle_game_over():
-    gameDisplay.fill(colors.white)
-    message_to_screen("GAME OVER!", colors.red, FONT_HEADER, -25)
-    message_to_screen("Press C to play again or Q to quit", colors.red, FONT_SUB_HEADER, 25)
+    gameDisplay.fill(colors.red)
+    message_to_screen("GAME OVER!", colors.white, FONT_HEADER, -25)
+    message_to_screen("Press C to play again or Q to quit", colors.white, FONT_SUB_HEADER, 25)
     pygame.display.update()
 
     for event in pygame.event.get():
@@ -95,13 +101,27 @@ def handle_game_over():
 
 def handle_game_intro():
     gameDisplay.fill(colors.snake_green)
-    font_header = pygame.font.SysFont(None, 50)
-    font_subheader = pygame.font.SysFont(None, 25)
-    message_to_screen("Hello!", colors.white, font_header, -25)
-    message_to_screen("Eat apples to win!", colors.white, font_subheader, 25)
+    message_to_screen("Hello!", colors.white, FONT_HEADER, -25)
+    message_to_screen("Eat apples to win!", colors.white, FONT_SUB_HEADER, 25)
     pygame.display.update()
     time.sleep(2)
     game_state.game_intro = False
+
+
+def handle_game_pause():
+    gameDisplay.fill(colors.snake_green)
+    message_to_screen("PAUSED", colors.white, FONT_HEADER, 0)
+    pygame.display.update()
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            game_state.set_game_exit()
+            game_state.game_pause = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                game_state.set_game_exit()
+            elif event.key == pygame.K_p:
+                game_state.game_pause = False
 
 
 def handle_movement_events():
@@ -111,6 +131,8 @@ def handle_movement_events():
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_q:
                 game_state.set_game_exit()
+            elif event.key == pygame.K_p:
+                game_state.game_pause = True
             elif event.key == pygame.K_LEFT:
                 game_state.change_direction(gamestate.Direction.LEFT)
                 game_state.head_image = change_head_img_direction(SNAKE_IMG, gamestate.Direction.LEFT)

@@ -33,6 +33,8 @@ class GameState:
     game_exit = False
     # display at the start of a game
     game_intro = True
+    # display the pause screen
+    game_pause = False
 
     def set_game_over(self):
         self.game_over = True
