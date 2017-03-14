@@ -27,9 +27,12 @@ class GameState:
         self.head_image = img
         self.apple_size = apple_size
 
+    # player lost
     game_over = False
-    # exit the game?
+    # exit the game
     game_exit = False
+    # display at the start of a game
+    game_intro = True
 
     def set_game_over(self):
         self.game_over = True

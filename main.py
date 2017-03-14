@@ -1,6 +1,7 @@
 import pygame
 import colors
 import gamestate
+import time
 
 
 # initialize pygame
@@ -9,19 +10,28 @@ pygame.init()
 
 FRAMES_PER_SECOND = 30
 SEGMENT_SIZE = 20
-APPLE_SIZE = 20
+APPLE_SIZE = 30
 WINDOW_SIZE = 600
-PIXELS_PER_FRAME = 20
-IMG = pygame.image.load('snake_head.png')
+PIXELS_PER_FRAME = 10
+SNAKE_IMG = pygame.image.load('snake_head.png')
+APPLE_IMG = pygame.image.load('snake_apple.png')
+WINDOW_NAME = 'Slither'
+WINDOW_ICON = pygame.image.load('snake_apple.png')
+# the font with which to print out stuff to the user
+FONT_HEADER = pygame.font.SysFont(None, 35)
+FONT_SUB_HEADER = pygame.font.SysFont(None, 25)
+
 
 # holds the game state (i.e game over or quit or play)
-game_state = gamestate.GameState(PIXELS_PER_FRAME, WINDOW_SIZE, SEGMENT_SIZE, FRAMES_PER_SECOND, IMG, APPLE_SIZE)
+game_state = gamestate.GameState(PIXELS_PER_FRAME, WINDOW_SIZE, SEGMENT_SIZE, FRAMES_PER_SECOND, SNAKE_IMG, APPLE_SIZE)
 
 # to print something out : print "lala {} lulu {}".format(arg1, arg2)
 
-gameDisplay = pygame.display.set_mode((game_state.window_size, game_state.window_size))
+gameDisplay = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE))
 # set the label for the window
-pygame.display.set_caption('Slither')
+pygame.display.set_caption(WINDOW_NAME)
+# set the icon for the window
+pygame.display.set_icon(WINDOW_ICON)
 # set to clock to control the fps
 clock = pygame.time.Clock()
 
@@ -33,12 +43,14 @@ def message_to_screen(msg, color, font, displace_y):
 
 
 def game_loop():
-
     # reset the state of the game
     game_state.reset()
 
     # main game loop
     while not game_state.game_exit:
+
+        while game_state.game_intro:
+            handle_game_intro()
 
         while game_state.game_over:
             handle_game_over()
@@ -66,12 +78,9 @@ def game_loop():
 
 
 def handle_game_over():
-    # the font with which to print out stuff to the user
     gameDisplay.fill(colors.white)
-    font_header = pygame.font.SysFont(None, 35)
-    font_subheader = pygame.font.SysFont(None, 25)
-    message_to_screen("GAME OVER!", colors.red, font_header, -25)
-    message_to_screen("Press C to play again or Q to quit", colors.red, font_subheader, 25)
+    message_to_screen("GAME OVER!", colors.red, FONT_HEADER, -25)
+    message_to_screen("Press C to play again or Q to quit", colors.red, FONT_SUB_HEADER, 25)
     pygame.display.update()
 
     for event in pygame.event.get():
@@ -84,6 +93,17 @@ def handle_game_over():
                 game_loop()
 
 
+def handle_game_intro():
+    gameDisplay.fill(colors.snake_green)
+    font_header = pygame.font.SysFont(None, 50)
+    font_subheader = pygame.font.SysFont(None, 25)
+    message_to_screen("Hello!", colors.white, font_header, -25)
+    message_to_screen("Eat apples to win!", colors.white, font_subheader, 25)
+    pygame.display.update()
+    time.sleep(2)
+    game_state.game_intro = False
+
+
 def handle_movement_events():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -93,22 +113,23 @@ def handle_movement_events():
                 game_state.set_game_exit()
             elif event.key == pygame.K_LEFT:
                 game_state.change_direction(gamestate.Direction.LEFT)
-                game_state.head_image = change_head_img_direction(IMG, gamestate.Direction.LEFT)
+                game_state.head_image = change_head_img_direction(SNAKE_IMG, gamestate.Direction.LEFT)
             elif event.key == pygame.K_RIGHT:
                 game_state.change_direction(gamestate.Direction.RIGHT)
-                game_state.head_image = change_head_img_direction(IMG, gamestate.Direction.RIGHT)
+                game_state.head_image = change_head_img_direction(SNAKE_IMG, gamestate.Direction.RIGHT)
             elif event.key == pygame.K_DOWN:
                 game_state.change_direction(gamestate.Direction.DOWN)
-                game_state.head_image = change_head_img_direction(IMG, gamestate.Direction.DOWN)
+                game_state.head_image = change_head_img_direction(SNAKE_IMG, gamestate.Direction.DOWN)
             elif event.key == pygame.K_UP:
                 game_state.change_direction(gamestate.Direction.UP)
-                game_state.head_image = change_head_img_direction(IMG, gamestate.Direction.UP)
+                game_state.head_image = change_head_img_direction(SNAKE_IMG, gamestate.Direction.UP)
 
 
 def draw():
     gameDisplay.fill(colors.white)
-    pygame.draw.rect(gameDisplay, colors.red,
-                     [game_state.apple[0], game_state.apple[1], game_state.apple_size, game_state.apple_size])
+
+    # draw the apple
+    gameDisplay.blit(APPLE_IMG, [game_state.apple[0], game_state.apple[1]])
 
     # draw the snake
     for pos in game_state.snake_list[:-1]:
@@ -116,6 +137,10 @@ def draw():
                          [pos[0], pos[1], game_state.block_size, game_state.block_size])
 
     gameDisplay.blit(game_state.head_image, [game_state.snake_list[-1][0], game_state.snake_list[-1][1]])
+
+    #show the score
+    score = FONT_HEADER.render('score: '+str(game_state.snake_length-1), True, colors.red)
+    gameDisplay.blit(score, [WINDOW_SIZE-score.get_width()*1.5, score.get_height()/2])
 
     pygame.display.update()
     clock.tick(game_state.fps)
