@@ -1,24 +1,17 @@
 import pygame
 import colors
-import movement
 import gamestate
-import random
 
-# the game window size in pixels
-window_size = 800
-# the pixel size of each block on the screen
-block_size = 10
-# how many frames per second the game should draw
-frames_per_second = 60
-# how many pixels to advance per frame
-distance_per_frame = 5
-# game over screen wait time
-game_over_wait = 1
+# holds the game state (i.e game over or quit or play)
+game_state = gamestate.GameState(3, 600, 10, 60)
 
+# to print something out : print "lala {} lulu {}".format(arg1, arg2)
+
+# TODO make the apple collision detection and rejuvenation function etc
 # initialize pygame
 pygame.init()
 # create a window for the game
-gameDisplay = pygame.display.set_mode((window_size, window_size))
+gameDisplay = pygame.display.set_mode((game_state.window_size, game_state.window_size))
 # set the label for the window
 pygame.display.set_caption('Slither')
 
@@ -28,40 +21,32 @@ clock = pygame.time.Clock()
 
 def message_to_screen(msg, color, font):
     screen_text = font.render(msg, True, color)
-    gameDisplay.blit(screen_text, [window_size / 2, window_size / 2])
-
-
-rand_apple_x = random.randrange(0, window_size - block_size)
-rand_apple_y = -random.randrange(0, window_size - block_size)
+    gameDisplay.blit(screen_text, [game_state.window_size / 2, game_state.window_size / 2])
 
 
 def game_loop():
 
-    # holds the game state (i.e game over or quit or play)
-    game_state = gamestate.GameState()
-    # the font with which to print out stuff to the user
-    font = pygame.font.SysFont(None, 25)
-    # init the initial location and movement params
-    move_holder = movement.MovementHolder(window_size / 2, window_size / 2, distance_per_frame)
+    # reset the state of the game
+    game_state.reset()
 
     # main game loop
     while not game_state.game_exit:
 
         while game_state.game_over:
-            handle_game_over(game_state, font)
+            handle_game_over()
 
         # keypress event handling and logic
-        handle_movement_events(game_state, move_holder)
+        handle_movement_events()
         # update position
-        movement.move(move_holder)
+        game_state.move()
+        # update apple if eaten
+        game_state.detect_apple_collision()
         # check for movement beyond edges
-        if (not game_state.game_exit) and movement.is_beyond_edges(move_holder, window_size):
+        if (not game_state.game_exit) and game_state.is_beyond_edges():
             game_state.set_game_over()
 
         # draw stuff on screen
-        draw(move_holder)
-
-        pygame.draw.rect(gameDisplay, colors.black, [move_holder.lead_x, move_holder.lead_y, block_size, block_size])
+        draw()
 
     # un-initialize pygame
     pygame.quit()
@@ -70,7 +55,9 @@ def game_loop():
     quit()
 
 
-def handle_game_over(game_state, font):
+def handle_game_over():
+    # the font with which to print out stuff to the user
+    font = pygame.font.SysFont(None, 25)
     gameDisplay.fill(colors.white)
     message_to_screen("GAME OVER! Press C to play again or Q to quit", colors.red, font)
     pygame.display.update()
@@ -85,27 +72,36 @@ def handle_game_over(game_state, font):
                 game_loop()
 
 
-def handle_movement_events(game_state, move_holder):
+def handle_movement_events():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             game_state.set_game_exit()
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                movement.change_direction(move_holder, movement.Direction.LEFT)
+            if event.key == pygame.K_q:
+                game_state.set_game_exit()
+            elif event.key == pygame.K_LEFT:
+                game_state.change_direction(gamestate.Direction.LEFT)
             elif event.key == pygame.K_RIGHT:
-                movement.change_direction(move_holder, movement.Direction.RIGHT)
+                game_state.change_direction(gamestate.Direction.RIGHT)
             elif event.key == pygame.K_DOWN:
-                movement.change_direction(move_holder, movement.Direction.DOWN)
+                game_state.change_direction(gamestate.Direction.DOWN)
             elif event.key == pygame.K_UP:
-                movement.change_direction(move_holder, movement.Direction.UP)
+                game_state.change_direction(gamestate.Direction.UP)
 
 
-def draw(move_holder):
+def draw():
     gameDisplay.fill(colors.white)
-    pygame.draw.rect(gameDisplay, colors.blue, [rand_apple_x, rand_apple_y, block_size, block_size])
-    pygame.draw.rect(gameDisplay, colors.black, [move_holder.lead_x, move_holder.lead_y, block_size, block_size])
+    pygame.draw.rect(gameDisplay, colors.red,
+                     [game_state.apple[0], game_state.apple[1], game_state.block_size, game_state.block_size])
+
+    # draw the snake
+    for pos in game_state.snake_list:
+        pygame.draw.rect(gameDisplay, colors.green,
+                         [pos[0], pos[1], game_state.block_size, game_state.block_size])
+
     pygame.display.update()
-    clock.tick(frames_per_second)
+    clock.tick(game_state.fps)
+
 
 # run the game
 game_loop()
